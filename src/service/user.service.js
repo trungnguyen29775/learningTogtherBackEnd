@@ -1,4 +1,4 @@
-const db = require('../models');
+const db = require('../model');
 const { Op } = require('sequelize');
 const bcrypt = require('bcryptjs');
 
@@ -28,7 +28,7 @@ exports.create = async (req, res) => {
 exports.authenticate = async (req, res) => {
     Users.findOne({
         where: {
-            user_name: req.body.userName,
+            username: req.body.username,
         },
     })
         .then((result) => {
