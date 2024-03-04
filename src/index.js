@@ -7,10 +7,27 @@ const { createServer } = require('http');
 const { Server } = require('socket.io');
 const { log } = require('console');
 const db = require('./model');
-
 const httpServer = createServer(app);
-
 const port = 5000;
+
+const io = new Server(httpServer, {
+    cors: {
+        origin: 'http://localhost:3000',
+    },
+});
+
+io.on('connection', (socket) => {
+    console.log('User connected: ', socket.id);
+    socket.on('online', ({ usernameOnline }) => {
+        socket.join(usernameOnline);
+        socket.on('send-message', ({ targetUser, message, sender }) => {
+            console.log(targetUser, message, sender);
+            socket.join(targetUser);
+            socket.to(targetUser).emit('recieved-message', { sender: sender, message: message });
+            socket.leave(targetUser);
+        });
+    });
+});
 
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));

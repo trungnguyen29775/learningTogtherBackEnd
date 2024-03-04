@@ -37,13 +37,33 @@ exports.authenticate = async (req, res) => {
             if (userData.password === req.body.password) {
                 res.status(200).json({
                     message: 'Authentication successful',
+                    userData: userData,
                 });
             } else {
-                res.status(200).json({
+                res.status(401).json({
                     message: 'Authentication failed',
-                    error: 'Invalid username or password',
+                    error: 'Invalid password',
                 });
             }
+        })
+        .catch((err) => {
+            res.status(500).send({
+                message: err.message || 'Some error occurred while retrieving User.',
+            });
+        });
+};
+
+exports.getAll = async (req, res) => {
+    Users.findAll({
+        where: {
+            username: {
+                [Op.not]: req.body.currentUsername,
+            },
+        },
+    })
+        .then((result) => {
+            // const userData = result;
+            res.status(200).send(result);
         })
         .catch((err) => {
             res.status(500).send({
