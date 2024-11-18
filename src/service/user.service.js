@@ -1,23 +1,33 @@
 const db = require('../model');
 const { Op } = require('sequelize');
 const bcrypt = require('bcryptjs');
+const { v4: uuidv4 } = require('uuid');
 
 const Users = db.Users;
+const ChatFeature = db.ChatFeature;
 
 exports.create = async (req, res) => {
     try {
-        const { name, username, password } = req.body;
-        if (!name || !username || !password) {
+        const { name, email, password } = req.body;
+        console.log(name, email, password);
+        if (!name || !email || !password) {
             return res.status(400).send('Name, username, and password are required.');
         }
 
+        const newUserId = uuidv4();
+        const newChatFeatureId = uuidv4();
+        await ChatFeature.create({ chat_feature_id: newChatFeatureId });
         const newUser = {
+            user_id: newUserId,
             name,
-            username,
+            email,
             password,
+            chat_feature_id: newChatFeatureId,
         };
-
         await Users.create(newUser);
+        console.log('user: ', newUserId);
+        console.log('Chat: ', newChatFeatureId);
+
         res.status(200).send('User created successfully!');
     } catch (error) {
         console.error('Error creating user:', error);
