@@ -4,6 +4,6 @@ module.exports = (app) => {
     router.post('/register', UsersService.create);
     router.post('/login', UsersService.authenticate);
     router.post('/get-all', UsersService.getAll);
-
+    router.post('/update-hobby', UsersService.updateHobby);
     app.use('/', router);
 };

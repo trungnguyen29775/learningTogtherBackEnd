@@ -38,7 +38,7 @@ exports.create = async (req, res) => {
 exports.authenticate = async (req, res) => {
     Users.findOne({
         where: {
-            username: req.body.username,
+            email: req.body.email,
         },
     })
         .then((result) => {
@@ -80,4 +80,46 @@ exports.getAll = async (req, res) => {
                 message: err.message || 'Some error occurred while retrieving User.',
             });
         });
+};
+
+exports.updateHobby = async (req, res) => {
+    try {
+        const favoriteObject = req.body.favorite?.reduce((acc, item) => {
+            acc[item.value] = item.status;
+            return acc;
+        }, {});
+
+        const typeFilmObject = req.body.typeFilm?.reduce((acc, item) => {
+            acc[item.value] = item.status;
+            return acc;
+        }, {});
+        const updateData = {
+            dob: req.body.dob,
+            slogan: req.body.slogan,
+            school: req.body.school,
+            major: req.body.major,
+            needs: req.body.needs,
+            sex: req.body.sex,
+            ...favoriteObject,
+            ...typeFilmObject,
+        };
+        const updatedUser = await Users.update(
+            {
+                ...updateData,
+            },
+            {
+                where: { email: req.body.email },
+            },
+        );
+
+        if (updatedUser[0] > 0) {
+            return res.status(200).send({ ...updateData, email: req.body.email, name: req.body.name });
+        } else {
+            res.status(201).send('Cap nhat that bai');
+        }
+    } catch (err) {
+        res.status(500).send({
+            message: err.message || 'Some error occurred while retrieving User.',
+        });
+    }
 };
