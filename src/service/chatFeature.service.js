@@ -30,7 +30,7 @@ exports.getChatFeaturesByUser = async (req, res) => {
             ],
         });
 
-        console.log(otherUsers);
+        // console.log(otherUsers);
         const result = otherUsers.map((cf) => ({
             chat_rooms_id: cf.chat_rooms_id,
             user_id: cf.user_id,

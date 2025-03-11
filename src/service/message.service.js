@@ -1,8 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
-const db = require('../models');
-const Message = db.Messages;
+const db = require('../model');
+const Message = db.Message;
 
-// 📝 Tạo tin nhắn mới
 exports.createMessage = async (req, res) => {
     try {
         const { chat_rooms_id, sender, content } = req.body;
@@ -42,13 +41,12 @@ exports.getMessageById = async (req, res) => {
     }
 };
 
-// 🔥 Lấy tất cả tin nhắn trong chat room theo `chat_rooms_id`
 exports.getMessagesByChatRoom = async (req, res) => {
     try {
         const { chat_rooms_id } = req.params;
         const messages = await Message.findAll({
-            where: { chat_rooms_id },
-            order: [['createdAt', 'ASC']], // Sắp xếp từ tin nhắn cũ đến mới
+            where: { chat_rooms_id: chat_rooms_id },
+            order: [['createdAt', 'ASC']],
         });
 
         if (!messages.length) {
@@ -62,7 +60,6 @@ exports.getMessagesByChatRoom = async (req, res) => {
     }
 };
 
-// ✏️ Cập nhật nội dung tin nhắn
 exports.updateMessage = async (req, res) => {
     try {
         const { id } = req.params;
@@ -82,7 +79,6 @@ exports.updateMessage = async (req, res) => {
     }
 };
 
-// ❌ Xóa tin nhắn
 exports.deleteMessage = async (req, res) => {
     try {
         const { id } = req.params;
