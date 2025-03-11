@@ -36,6 +36,9 @@ app.use(bodyParser.json());
 db.sequelize.sync({ alter: true });
 
 require('./controller/users.controller')(app);
+require('./controller/friendship.controller')(app);
+require('./controller/chatFeature.controller')(app);
+// require('./controller/notification.controller')(app);
 
 httpServer.listen(port, () => {
     console.log('Listen on port ', port);

@@ -5,7 +5,6 @@ const { v4: uuidv4 } = require('uuid');
 const jwt = require('jsonwebtoken');
 
 const Users = db.Users;
-const ChatFeature = db.ChatFeature;
 const SECRET_KEY = 'your_secret_key';
 
 exports.create = async (req, res) => {
@@ -23,15 +22,12 @@ exports.create = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUserId = uuidv4();
-        const newChatFeatureId = uuidv4();
-        await ChatFeature.create({ chat_feature_id: newChatFeatureId });
 
         const newUser = await Users.create({
             user_id: newUserId,
             name,
             email,
             password: hashedPassword,
-            chat_feature_id: newChatFeatureId,
         });
 
         res.status(201).json({ message: 'User registered successfully', user: newUser });
@@ -74,18 +70,21 @@ const authenticateToken = (req, res, next) => {
         next();
     });
 };
-
 exports.getAll = async (req, res) => {
     try {
+        console.log(req.body);
         const users = await Users.findAll({
             where: {
-                user_id: { [Op.not]: req.user.user_id },
+                user_id: { [Op.not]: req.body.user_id }, // Loại bỏ user_id của người gửi request
+            },
+            attributes: {
+                exclude: ['email', 'password'], // Loại bỏ email và password khỏi kết quả
             },
         });
 
-        const sanitizedUsers = users.map(({ password, email, chat_feature_id, ...rest }) => rest);
-        res.status(200).json(sanitizedUsers);
+        res.status(200).json(users);
     } catch (error) {
+        console.error('Error retrieving users:', error);
         res.status(500).json({ message: 'Some error occurred while retrieving Users.', error });
     }
 };
@@ -127,7 +126,7 @@ exports.updateProfile = async (req, res) => {
 
 exports.updateHobby = async (req, res) => {
     try {
-        const { email, name, dob, slogan, school, major, needs, sex, favorite = [], typeFilm = [] } = req.body;
+        const { email, user_id, name, dob, slogan, school, major, needs, sex, favorite = [], typeFilm = [] } = req.body;
 
         const favoriteObject = favorite.reduce((acc, item) => {
             acc[item.value] = item.status;
@@ -144,7 +143,7 @@ exports.updateHobby = async (req, res) => {
         const updatedUser = await Users.update(updateData, { where: { email } });
 
         if (updatedUser[0] > 0) {
-            return res.status(200).json({ message: 'User updated successfully', email, name, ...updateData });
+            return res.status(200).json({ message: 'User updated successfully', email, name, user_id, ...updateData });
         } else {
             res.status(400).json({ message: 'Failed to update user data.' });
         }

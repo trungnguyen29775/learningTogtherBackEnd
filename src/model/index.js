@@ -18,22 +18,22 @@ db.Notification = require('./notification.model')(sequelize, Sequelize);
 // ---------------------------------------Relation-----------------------------------------
 
 // Chat Feature & User
-db.ChatFeature.hasMany(db.Users, {
-    foreignKey: 'chat_feature_id',
+db.Users.hasMany(db.ChatFeature, {
+    foreignKey: 'user_id',
 });
 
-db.Users.belongsTo(db.ChatFeature, {
-    foreignKey: 'chat_feature_id',
+db.ChatFeature.belongsTo(db.Users, {
+    foreignKey: 'user_id',
 });
 
 // Chat Rooms & Chat Feature
 
-db.ChatRooms.belongsTo(db.ChatFeature, {
-    foreignKey: 'chat_feature_id',
+db.ChatFeature.belongsTo(db.ChatRooms, {
+    foreignKey: 'chat_rooms_id',
 });
 
-db.ChatFeature.hasMany(db.ChatRooms, {
-    foreignKey: 'chat_feature_id',
+db.ChatRooms.hasMany(db.ChatFeature, {
+    foreignKey: 'chat_rooms_id',
 });
 // Chat Rooms & Messages
 
