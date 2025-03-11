@@ -12,6 +12,8 @@ db.Users = require('./users.model')(sequelize, Sequelize);
 db.ChatFeature = require('./chatFeature.model')(sequelize, Sequelize);
 db.ChatRooms = require('./chatRoom.model')(sequelize, Sequelize);
 db.Message = require('./message.model')(sequelize, Sequelize);
+db.Friendship = require('./friendship.model')(sequelize, Sequelize);
+db.Notification = require('./notification.model')(sequelize, Sequelize);
 
 // ---------------------------------------Relation-----------------------------------------
 
@@ -42,4 +44,23 @@ db.Message.belongsTo(db.ChatRooms, {
 db.ChatRooms.hasMany(db.Message, {
     foreignKey: 'chat_rooms_id',
 });
+
+// Friendship
+db.Friendship.belongsTo(db.Users, {
+    foreignKey: 'user_id',
+});
+
+db.Users.hasMany(db.Friendship, {
+    foreignKey: 'user_id',
+});
+
+// Notification
+db.Notification.belongsTo(db.Users, {
+    foreignKey: 'user_id',
+});
+
+db.Users.hasMany(db.Notification, {
+    foreignKey: 'user_id',
+});
+
 module.exports = db;
