@@ -8,51 +8,56 @@ const ChatFeature = db.ChatFeature;
 
 exports.createFriendship = async (req, res) => {
     try {
-        const { user_id, friend_id } = req.body;
+        const { user_id, friend_id, status } = req.body;
+        if (status !== 'skipped') {
+            let existingFriendship = await Friendship.findOne({
+                where: {
+                    [Op.or]: [
+                        { user_id: user_id, friend_id: friend_id },
+                        { user_id: friend_id, friend_id: user_id },
+                    ],
+                },
+            });
 
-        // Kiểm tra nếu friendship đã tồn tại
-        let existingFriendship = await Friendship.findOne({
-            where: {
-                [Op.or]: [
-                    { user_id: user_id, friend_id: friend_id },
-                    { user_id: friend_id, friend_id: user_id },
-                ],
-            },
-        });
+            if (existingFriendship) {
+                if (existingFriendship.status === 'pending') {
+                    await existingFriendship.update({ status: 'accepted' });
 
-        if (existingFriendship) {
-            if (existingFriendship.status === 'pending') {
-                // Cập nhật trạng thái thành 'accepted'
-                await existingFriendship.update({ status: 'accepted' });
+                    const chatRoom = await ChatRooms.create({
+                        chat_rooms_id: uuidv4(),
+                    });
 
-                // Tạo Chat Room mới
-                const chatRoom = await ChatRooms.create({
-                    chat_rooms_id: uuidv4(),
-                });
+                    // Tạo Chat Feature cho cả hai người
+                    await ChatFeature.bulkCreate([
+                        { chat_feature_id: uuidv4(), user_id, chat_rooms_id: chatRoom.chat_rooms_id },
+                        { chat_feature_id: uuidv4(), user_id: friend_id, chat_rooms_id: chatRoom.chat_rooms_id },
+                    ]);
 
-                // Tạo Chat Feature cho cả hai người
-                await ChatFeature.bulkCreate([
-                    { chat_feature_id: uuidv4(), user_id, chat_rooms_id: chatRoom.chat_rooms_id },
-                    { chat_feature_id: uuidv4(), user_id: friend_id, chat_rooms_id: chatRoom.chat_rooms_id },
-                ]);
-
-                return res.status(200).json({
-                    message: 'Friendship accepted & Chat room created',
-                    friendship: existingFriendship,
-                    chatRoom,
-                });
+                    return res.status(200).json({
+                        message: 'Friendship accepted & Chat room created',
+                        friendship: existingFriendship,
+                        chatRoom,
+                    });
+                }
             }
+
+            const newFriendship = await Friendship.create({
+                friendship_id: uuidv4(),
+                user_id,
+                friend_id,
+                status: 'pending',
+            });
+
+            res.status(201).json({ message: 'Friend request sent', friendship: newFriendship });
+        } else {
+            const newFriendship = await Friendship.create({
+                friendship_id: uuidv4(),
+                user_id,
+                friend_id,
+                status: 'skipped',
+            });
+            res.status(201).json({ message: 'Skipped', friendship: newFriendship });
         }
-
-        // Nếu chưa có, tạo mới với trạng thái 'pending'
-        const newFriendship = await Friendship.create({
-            friendship_id: uuidv4(),
-            user_id,
-            friend_id,
-            status: 'pending',
-        });
-
-        res.status(201).json({ message: 'Friend request sent', friendship: newFriendship });
     } catch (error) {
         console.error('Error creating friendship:', error);
         res.status(500).json({ message: 'Internal Server Error' });

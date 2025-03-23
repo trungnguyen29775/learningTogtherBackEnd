@@ -31,12 +31,22 @@ io.on('connection', (socket) => {
 
         if (targetSocketId) {
             io.to(targetSocketId).emit('received-message', { senderId, message, chat_rooms_id });
+
             console.log(`📨 ${senderId} gửi tin nhắn cho ${targetUserId}: ${message}`);
         } else {
             console.log(`⚠️ User ${targetUserId} không online!`);
         }
     });
 
+    socket.on('send-notify', ({ targetUserId, data }) => {
+        const targetSocketId = onlineUsers[targetUserId];
+        if (targetSocketId) {
+            io.to(targetSocketId).emit('received-notify', { data });
+            console.log(`gửi thông báo cho ${targetUserId}: ${data}`);
+        } else {
+            console.log(`⚠️ User ${targetUserId} không online!`);
+        }
+    });
     socket.on('disconnect', () => {
         for (let user in onlineUsers) {
             if (onlineUsers[user] === socket.id) {

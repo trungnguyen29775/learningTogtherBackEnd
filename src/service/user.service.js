@@ -1,10 +1,13 @@
 const db = require('../model');
-const { Op } = require('sequelize');
+const { Op, where } = require('sequelize');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const jwt = require('jsonwebtoken');
 
 const Users = db.Users;
+const ChatFeature = db.ChatFeature;
+const Friendship = db.Friendship;
+
 const SECRET_KEY = 'your_secret_key';
 
 exports.create = async (req, res) => {
@@ -72,13 +75,36 @@ const authenticateToken = (req, res, next) => {
 };
 exports.getAll = async (req, res) => {
     try {
-        console.log(req.body);
+        const user_id = req.body.user_id;
+        const friendId = await Friendship.findAll({
+            where: {
+                user_id,
+                status: {
+                    [Op.or]: ['accepted', 'skipped'],
+                },
+            },
+            attributes: ['friend_id'],
+        });
+        const otherFriendId = await Friendship.findAll({
+            where: {
+                friend_id: user_id,
+                status: {
+                    [Op.or]: ['accepted', 'skipped'],
+                },
+            },
+            attributes: ['user_id'],
+        });
+        const result = [user_id];
+        friendId.map((item) => result.push(item.friend_id));
+        otherFriendId.map((item) => result.push(item.user_id));
+        console.log('Ket qua', result);
+
         const users = await Users.findAll({
             where: {
-                user_id: { [Op.not]: req.body.user_id }, // Loại bỏ user_id của người gửi request
+                user_id: { [Op.notIn]: result },
             },
             attributes: {
-                exclude: ['email', 'password'], // Loại bỏ email và password khỏi kết quả
+                exclude: ['email', 'password'],
             },
         });
 

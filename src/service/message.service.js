@@ -24,7 +24,6 @@ exports.createMessage = async (req, res) => {
     }
 };
 
-// 📨 Lấy tin nhắn theo ID
 exports.getMessageById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -48,11 +47,6 @@ exports.getMessagesByChatRoom = async (req, res) => {
             where: { chat_rooms_id: chat_rooms_id },
             order: [['createdAt', 'ASC']],
         });
-
-        if (!messages.length) {
-            return res.status(404).json({ message: 'No messages found in this chat room' });
-        }
-
         res.status(200).json(messages);
     } catch (error) {
         console.error('Error fetching messages:', error);

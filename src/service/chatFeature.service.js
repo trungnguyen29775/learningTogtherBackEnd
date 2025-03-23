@@ -5,7 +5,6 @@ exports.getChatFeaturesByUser = async (req, res) => {
     try {
         const { user_id } = req.params;
 
-        // Tìm tất cả ChatFeature của user_id
         const chatFeatures = await ChatFeature.findAll({
             where: { user_id },
             attributes: ['chat_rooms_id'], // Chỉ lấy chat_rooms_id
@@ -30,7 +29,6 @@ exports.getChatFeaturesByUser = async (req, res) => {
             ],
         });
 
-        // console.log(otherUsers);
         const result = otherUsers.map((cf) => ({
             chat_rooms_id: cf.chat_rooms_id,
             user_id: cf.user_id,
