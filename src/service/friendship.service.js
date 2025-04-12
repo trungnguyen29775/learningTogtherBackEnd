@@ -1,14 +1,14 @@
 const { where, Op } = require('sequelize');
-const db = require('../model'); // Đảm bảo bạn có models/index.js để kết nối DB
 const { v4: uuidv4 } = require('uuid');
-
+const db = require('../model/index');
 const ChatRooms = db.ChatRooms;
 const Friendship = db.Friendship;
 const ChatFeature = db.ChatFeature;
-
+const Message = db.Message;
+const Notification = db.Notification;
 exports.createFriendship = async (req, res) => {
     try {
-        const { user_id, friend_id, status } = req.body;
+        const { user_id, friend_id, status, currentName, targetName, currentAvtFilePath, targetAvtFilePath } = req.body;
         if (status !== 'skipped') {
             let existingFriendship = await Friendship.findOne({
                 where: {
@@ -22,17 +22,14 @@ exports.createFriendship = async (req, res) => {
             if (existingFriendship) {
                 if (existingFriendship.status === 'pending') {
                     await existingFriendship.update({ status: 'accepted' });
-
                     const chatRoom = await ChatRooms.create({
                         chat_rooms_id: uuidv4(),
                     });
 
-                    // Tạo Chat Feature cho cả hai người
                     await ChatFeature.bulkCreate([
                         { chat_feature_id: uuidv4(), user_id, chat_rooms_id: chatRoom.chat_rooms_id },
                         { chat_feature_id: uuidv4(), user_id: friend_id, chat_rooms_id: chatRoom.chat_rooms_id },
                     ]);
-
                     return res.status(200).json({
                         message: 'Friendship accepted & Chat room created',
                         friendship: existingFriendship,
@@ -112,45 +109,87 @@ exports.getFriendshipById = async (req, res) => {
     }
 };
 
-/**
- * Cập nhật trạng thái mối quan hệ bạn bè
- */
 exports.updateFriendship = async (req, res) => {
     try {
-        const { id } = req.params;
-        const { status } = req.body;
+        const { currentUserId, status, targetUserId } = req.body;
+        console.log(currentUserId, status, targetUserId);
 
-        if (!status) {
-            return res.status(400).json({ message: 'Status là bắt buộc.' });
+        // Tìm friendship
+        const friendship = await Friendship.findOne({
+            where: {
+                [Op.or]: [
+                    { user_id: currentUserId, friend_id: targetUserId },
+                    { user_id: targetUserId, friend_id: currentUserId },
+                ],
+            },
+        });
+
+        if (!friendship) {
+            return res.status(404).json({ message: 'Friendship not found' });
         }
 
-        const updated = await Friendship.update({ status }, { where: { friendship_id: id } });
+        // Cập nhật trạng thái
+        await friendship.update({ status });
 
-        if (updated[0] === 0) {
-            return res.status(404).json({ message: 'Friendship không tồn tại hoặc không có thay đổi' });
-        }
-
-        res.status(200).json({ message: 'Friendship updated successfully' });
+        // Phản hồi thành công
+        res.status(200).json({
+            message: 'Friendship updated successfully',
+            data: { currentUserId, status, targetUserId },
+        });
     } catch (error) {
         console.error('Error updating friendship:', error);
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
 
-/**
- * Xóa một mối quan hệ bạn bè theo ID
- */
 exports.deleteFriendship = async (req, res) => {
+    const transaction = await db.sequelize.transaction();
     try {
-        const { id } = req.params;
-        const deleted = await Friendship.destroy({ where: { friendship_id: id } });
+        const { currentUserId, targetUserId, chat_rooms_id } = req.body;
 
-        if (!deleted) {
+        const friendship = await Friendship.findOne({
+            where: {
+                [Op.or]: [
+                    { user_id: currentUserId, friend_id: targetUserId },
+                    { user_id: targetUserId, friend_id: currentUserId },
+                ],
+            },
+            transaction,
+        });
+
+        if (!friendship) {
+            await transaction.rollback(); // Rollback nếu không tìm thấy
             return res.status(404).json({ message: 'Friendship not found' });
         }
 
-        res.status(200).json({ message: 'Friendship deleted successfully' });
+        await Message.destroy({
+            where: {
+                chat_rooms_id: chat_rooms_id,
+            },
+            transaction,
+        });
+
+        await ChatFeature.destroy({
+            where: {
+                chat_rooms_id: chat_rooms_id,
+            },
+            transaction,
+        });
+
+        await ChatRooms.destroy({
+            where: {
+                chat_rooms_id: chat_rooms_id,
+            },
+            transaction,
+        });
+
+        await friendship.destroy({ transaction });
+
+        await transaction.commit();
+
+        res.status(200).json({ message: 'Friendship and related data deleted successfully' });
     } catch (error) {
+        await transaction.rollback(); // Rollback nếu có lỗi
         console.error('Error deleting friendship:', error);
         res.status(500).json({ message: 'Internal Server Error' });
     }

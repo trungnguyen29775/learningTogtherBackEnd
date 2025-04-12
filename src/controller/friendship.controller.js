@@ -5,8 +5,8 @@ module.exports = (app) => {
     router.post('/create-friendship', FriendshipService.createFriendship);
     // router.get('/get-all-friendships', FriendshipService.getAllFriendships);
     router.get('/get-friendship/:id', FriendshipService.getFriendshipById);
-    router.put('/update-friendship/:id', FriendshipService.updateFriendship);
-    router.delete('/delete-friendship/:id', FriendshipService.deleteFriendship);
+    router.put('/update-friendship', FriendshipService.updateFriendship);
+    router.delete('/delete-friendship', FriendshipService.deleteFriendship);
 
     app.use('/', router);
 };

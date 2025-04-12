@@ -21,6 +21,10 @@ module.exports = (sequelize, Sequelize) => {
                 allowNull: false,
                 defaultValue: 'unread',
             },
+            img_path: {
+                type: DataTypes.STRING,
+                allowNull: true,
+            },
             createdAt: {
                 type: DataTypes.DATE,
                 defaultValue: DataTypes.NOW,
