@@ -72,6 +72,7 @@ require('./controller/friendship.controller')(app);
 require('./controller/chatFeature.controller')(app);
 require('./controller/message.controller')(app);
 require('./controller/notification.controller')(app);
+require('./controller/userImage.controller')(app);
 
 // Khởi chạy server
 httpServer.listen(port, () => {

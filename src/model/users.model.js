@@ -23,10 +23,7 @@ module.exports = (sequelize, Sequelize) => {
                 type: Sequelize.STRING,
                 allowNull: true,
             },
-            avt_file_path: {
-                type: Sequelize.STRING,
-                allowNull: true,
-            },
+
             dob: {
                 type: Sequelize.DATE,
                 allowNull: true,
