@@ -6,7 +6,7 @@ const Users = db.Users;
 // Tạo mới user image
 exports.createUserImage = async (req, res) => {
     try {
-        const { user_id, path } = req.body;
+        const { user_id, path, is_featured } = req.body;
 
         if (!user_id || !path) {
             return res.status(400).json({ message: 'Missing required fields: user_id and path' });
@@ -22,6 +22,7 @@ exports.createUserImage = async (req, res) => {
             user_image_id: uuidv4(),
             user_id,
             path,
+            is_featured,
         });
 
         res.status(201).json({
@@ -37,8 +38,12 @@ exports.createUserImage = async (req, res) => {
 // Lấy user image bằng ID
 exports.getUserImageById = async (req, res) => {
     try {
-        const { id } = req.params;
-        const userImage = await UserImage.findByPk(id);
+        const { user_image_id } = req.body;
+        const userImage = await UserImage.findOne({
+            where: {
+                user_image_id,
+            },
+        });
 
         if (!userImage) {
             return res.status(404).json({ message: 'User image not found' });
@@ -76,19 +81,22 @@ exports.getImagesByUserId = async (req, res) => {
 // Cập nhật user image
 exports.updateUserImage = async (req, res) => {
     try {
-        const { id } = req.params;
-        const { path } = req.body;
+        const { path, is_featured, user_image_id } = req.body;
 
         if (!path) {
             return res.status(400).json({ message: 'Path is required' });
         }
 
-        const userImage = await UserImage.findByPk(id);
+        const userImage = await UserImage.findOne({
+            where: {
+                user_image_id,
+            },
+        });
         if (!userImage) {
             return res.status(404).json({ message: 'User image not found' });
         }
 
-        await userImage.update({ path });
+        await userImage.update({ path, is_featured });
 
         res.status(200).json({
             message: 'User image updated successfully',
@@ -103,9 +111,13 @@ exports.updateUserImage = async (req, res) => {
 // Xóa user image
 exports.deleteUserImage = async (req, res) => {
     try {
-        const { id } = req.params;
-
-        const userImage = await UserImage.findByPk(id);
+        const { user_image_id } = req.body;
+        console.log('asldlasdasd: ', req.body);
+        const userImage = await UserImage.findOne({
+            where: {
+                user_image_id,
+            },
+        });
         if (!userImage) {
             return res.status(404).json({ message: 'User image not found' });
         }

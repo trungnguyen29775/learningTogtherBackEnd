@@ -24,7 +24,7 @@ exports.getChatFeaturesByUser = async (req, res) => {
             include: [
                 {
                     model: Users,
-                    attributes: ['user_id', 'name', 'avt_file_path'],
+                    attributes: ['user_id', 'name'],
                 },
             ],
         });

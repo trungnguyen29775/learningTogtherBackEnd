@@ -5,6 +5,6 @@ module.exports = (app) => {
     router.get('/get-image/:imageId', UserImageService.getUserImageById);
     router.get('/get-user-images/:userId', UserImageService.getImagesByUserId);
     router.post('/update-image', UserImageService.updateUserImage);
-    router.post('/delete-image', UserImageService.deleteUserImage);
-    app.use('/user-image', router); // Tiền tố /user-image cho tất cả các route
+    router.delete('/delete-image', UserImageService.deleteUserImage);
+    app.use('/user-image', router);
 };
