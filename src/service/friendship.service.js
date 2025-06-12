@@ -8,7 +8,8 @@ const Message = db.Message;
 const Notification = db.Notification;
 exports.createFriendship = async (req, res) => {
     try {
-        const { user_id, friend_id, status, currentName, targetName, currentAvtFilePath, targetAvtFilePath } = req.body;
+        const { user_id, friend_id, status } = req.body;
+
         if (status !== 'skipped') {
             let existingFriendship = await Friendship.findOne({
                 where: {

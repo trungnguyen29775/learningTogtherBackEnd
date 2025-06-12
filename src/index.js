@@ -15,17 +15,16 @@ const io = new Server(httpServer, {
     },
 });
 
-// Lưu danh sách user online và socket ID của họ
 const onlineUsers = {};
 const quickChatQueue = [];
-const activeChats = new Map(); // chatId -> {user1: {socketId, userId}, user2: {socketId, userId}, interests}
+const activeChats = new Map();
 
 io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
 
     socket.on('online', ({ user_id }) => {
         onlineUsers[user_id] = socket.id;
-        console.log(`🟢 ${user_id} is online - Socket ID: ${socket.id}`);
+        console.log(` ${user_id} is online - Socket ID: ${socket.id}`);
     });
 
     // Regular messaging
@@ -33,9 +32,9 @@ io.on('connection', (socket) => {
         const targetSocketId = onlineUsers[targetUserId];
         if (targetSocketId) {
             io.to(targetSocketId).emit('received-message', { senderId, message, chat_rooms_id });
-            console.log(`📨 ${senderId} gửi tin nhắn cho ${targetUserId}: ${message}`);
+            console.log(` ${senderId} gửi tin nhắn cho ${targetUserId}: ${message}`);
         } else {
-            console.log(`⚠️ User ${targetUserId} không online!`);
+            console.log(`User ${targetUserId} không online!`);
         }
     });
 
@@ -60,8 +59,10 @@ io.on('connection', (socket) => {
         const userData = { socketId: socket.id, userId, interests };
 
         // Try to find a match
-        const matchIndex = quickChatQueue.findIndex((u) => hasMatchingInterests(u.interests, interests));
-
+        let matchIndex = quickChatQueue.findIndex((u) => hasMatchingInterests(u.interests, interests));
+        if (matchIndex == -1 && quickChatQueue.length == 1) {
+            matchIndex = 0;
+        }
         if (matchIndex !== -1) {
             // Found a match
             const partner = quickChatQueue[matchIndex];
@@ -79,10 +80,12 @@ io.on('connection', (socket) => {
             io.to(partner.socketId).emit('chat-started', {
                 chatId,
                 partnerInterests: interests,
+                friend_id: userId,
             });
             io.to(socket.id).emit('chat-started', {
                 chatId,
                 partnerInterests: partner.interests,
+                friend_id: partner.userId,
             });
 
             callback({ success: true });
@@ -217,7 +220,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 // Đồng bộ database
-// db.sequelize.sync({ alter: true });
+db.sequelize.sync({ alter: true });
 
 // Routes
 require('./controller/users.controller')(app);
