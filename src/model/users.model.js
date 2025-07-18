@@ -150,6 +150,14 @@ module.exports = (sequelize, Sequelize) => {
                 allowNull: false,
                 defaultValue: false,
             },
+            latitude: {
+                type: Sequelize.FLOAT,
+                allowNull: true,
+            },
+            longitude: {
+                type: Sequelize.FLOAT,
+                allowNull: true,
+            },
         },
         {
             timestamps: false,

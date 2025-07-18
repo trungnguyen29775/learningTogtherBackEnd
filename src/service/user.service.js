@@ -12,7 +12,7 @@ const SECRET_KEY = 'your_secret_key';
 
 exports.create = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password, latitude, longitude } = req.body;
         if (!name || !email || !password) {
             return res.status(400).json({ message: 'Name, email, and password are required.' });
         }
@@ -31,6 +31,8 @@ exports.create = async (req, res) => {
             name,
             email,
             password: hashedPassword,
+            latitude: latitude || null,
+            longitude: longitude || null,
         });
 
         res.status(201).json({ message: 'User registered successfully', user: newUser });
@@ -117,14 +119,17 @@ exports.getAll = async (req, res) => {
 
 exports.getProfile = async (req, res) => {
     try {
-        const { email } = req.body;
-        const user = await Users.findOne({ where: { email } });
-
+        const userId = req.params.userId;
+        if (!userId) {
+            return res.status(400).json({ message: 'User ID is required.' });
+        }
+        const user = await Users.findOne({ where: { user_id: userId } });
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
-
-        res.status(200).json({ message: 'Profile retrieved successfully', user });
+        // Load all user images for this user
+        const userImages = await db.UserImage.findAll({ where: { user_id: userId } });
+        res.status(200).json({ message: 'Profile retrieved successfully', user, userImages });
     } catch (error) {
         console.error('Error retrieving user profile:', error);
         res.status(500).json({ message: 'Internal Server Error', error });
@@ -133,7 +138,18 @@ exports.getProfile = async (req, res) => {
 
 exports.updateProfile = async (req, res) => {
     try {
+        console.log('updateProfile req.body:', req.body);
         const { email, name, dob, slogan, school, major, needs, sex, favoriteHobbies, favoriteMovies } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required.' });
+        }
+
+        // Validate ENUM fields
+        const allowedNeeds = ['findTutor', 'studyBuddy', 'sharedHobby', ''];
+        if (needs && !allowedNeeds.includes(needs)) {
+            return res.status(400).json({ message: 'Invalid value for needs.' });
+        }
 
         const updateData = { dob, slogan, school, major, needs, sex, favoriteHobbies, favoriteMovies };
 
@@ -142,7 +158,7 @@ exports.updateProfile = async (req, res) => {
         if (updatedUser[0] > 0) {
             return res.status(200).json({ message: 'Profile updated successfully', email, name, ...updateData });
         } else {
-            res.status(400).json({ message: 'Failed to update profile.' });
+            res.status(400).json({ message: 'Failed to update profile. User not found or no changes.' });
         }
     } catch (error) {
         console.error('Error updating profile:', error);

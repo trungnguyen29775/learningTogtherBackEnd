@@ -1,3 +1,6 @@
+// ...existing code...
+// Accept call event must be inside io.on('connection')
+// ...existing code...
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
@@ -20,6 +23,15 @@ const quickChatQueue = [];
 const activeChats = new Map();
 
 io.on('connection', (socket) => {
+    // Accept call event (with peerId for PeerJS)
+    socket.on('accept-call', ({ toUser, fromUser, type, chat_rooms_id, peerId }) => {
+        const targetSocketId = onlineUsers[toUser];
+        if (targetSocketId) {
+            io.to(targetSocketId).emit('call-accepted', { fromUser, toUser: fromUser.user_id, type, chat_rooms_id, peerId });
+        }
+        // Also notify the acceptor (self)
+        socket.emit('call-accepted', { fromUser, toUser, type, chat_rooms_id, peerId });
+    });
     console.log('User connected:', socket.id);
 
     socket.on('online', ({ user_id }) => {
@@ -27,14 +39,46 @@ io.on('connection', (socket) => {
         console.log(` ${user_id} is online - Socket ID: ${socket.id}`);
     });
 
+
     // Regular messaging
     socket.on('send-message', ({ targetUserId, message, senderId, chat_rooms_id }) => {
+        console.log('[send-message] from:', senderId, 'to:', targetUserId, 'room:', chat_rooms_id, 'msg:', message);
         const targetSocketId = onlineUsers[targetUserId];
         if (targetSocketId) {
             io.to(targetSocketId).emit('received-message', { senderId, message, chat_rooms_id });
-            console.log(` ${senderId} gửi tin nhắn cho ${targetUserId}: ${message}`);
+            console.log(`[received-message] sent to socketId: ${targetSocketId}`);
         } else {
-            console.log(`User ${targetUserId} không online!`);
+            console.log(`[send-message] User ${targetUserId} is not online!`);
+        }
+    });
+
+    // Call and Video Call events (with peerId for PeerJS)
+    socket.on('start-call', ({ toUser, fromUser, type, chat_rooms_id, peerId }) => {
+        const targetSocketId = onlineUsers[toUser];
+        if (targetSocketId) {
+            io.to(targetSocketId).emit('incoming-call', { fromUser, type, chat_rooms_id, peerId });
+            console.log(`Call (${type}) from ${fromUser.user_id} to ${toUser} (peerId: ${peerId})`);
+        }
+    });
+
+    socket.on('end-call', async ({ toUser, fromUser, type, duration, chat_rooms_id }) => {
+        const targetSocketId = onlineUsers[toUser];
+        if (targetSocketId) {
+            io.to(targetSocketId).emit('call-ended', { fromUser, toUser, type, duration, chat_rooms_id });
+        }
+        // Save call duration as a message in DB for both users
+        try {
+            const db = require('./model');
+            const Message = db.Message;
+            const msgContent = `Cuộc gọi ${type === 'video' ? 'video' : 'thường'} kết thúc. Thời lượng: ${Math.round(duration/1000)} giây.`;
+            await Message.create({
+                messages_id: Date.now().toString(36) + Math.random().toString(36).substr(2),
+                sender: 'system',
+                content: msgContent,
+                chat_rooms_id,
+            });
+        } catch (err) {
+            console.error('Error saving call message:', err);
         }
     });
 
@@ -229,6 +273,7 @@ require('./controller/chatFeature.controller')(app);
 require('./controller/message.controller')(app);
 require('./controller/notification.controller')(app);
 require('./controller/userImage.controller')(app);
+require('./controller/likedYou.controller')(app);
 
 // Khởi chạy server
 httpServer.listen(port, () => {
