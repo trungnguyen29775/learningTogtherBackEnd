@@ -37,7 +37,7 @@ module.exports = (sequelize, Sequelize) => {
                 allowNull: true,
             },
             needs: {
-                type: Sequelize.ENUM('findTutor', 'studyBuddy', 'sharedHobby'),
+                type: Sequelize.ENUM('findTutor', 'studyBuddy', 'sharedHobby', ''),
                 allowNull: true,
             },
             sex: {
@@ -156,6 +156,14 @@ module.exports = (sequelize, Sequelize) => {
             },
             longitude: {
                 type: Sequelize.FLOAT,
+                allowNull: true,
+            },
+            favoriteHobbies: {
+                type: DataTypes.JSON,
+                allowNull: true,
+            },
+            favoriteMovies: {
+                type: DataTypes.JSON,
                 allowNull: true,
             },
         },

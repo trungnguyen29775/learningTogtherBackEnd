@@ -15,6 +15,8 @@ db.Message = require('./message.model')(sequelize, Sequelize);
 db.Friendship = require('./friendship.model')(sequelize, Sequelize);
 db.Notification = require('./notification.model')(sequelize, Sequelize);
 db.UserImage = require('./userImage.model')(sequelize, Sequelize);
+db.UserLike = require('./userLike.model')(sequelize, Sequelize);
+db.UserPriority = require('./userPriority.model')(sequelize, Sequelize);
 // ---------------------------------------Relation-----------------------------------------
 
 // Chat Feature & User
@@ -63,13 +65,26 @@ db.Users.hasMany(db.Notification, {
     foreignKey: 'user_id',
 });
 
-// User Image
-
 db.UserImage.belongsTo(db.Users, {
     foreignKey: 'user_id',
 });
 
 db.Users.hasMany(db.UserImage, {
+    foreignKey: 'user_id',
+});
+// UserLike
+db.UserLike.belongsTo(db.Users, {
+    foreignKey: 'user_id',
+});
+db.Users.hasMany(db.UserLike, {
+    foreignKey: 'user_id',
+});
+
+// UserPriority
+db.UserPriority.belongsTo(db.Users, {
+    foreignKey: 'user_id',
+});
+db.Users.hasMany(db.UserPriority, {
     foreignKey: 'user_id',
 });
 

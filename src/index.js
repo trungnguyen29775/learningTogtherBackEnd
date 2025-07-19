@@ -1,6 +1,4 @@
-// ...existing code...
-// Accept call event must be inside io.on('connection')
-// ...existing code...
+
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
@@ -274,6 +272,8 @@ require('./controller/message.controller')(app);
 require('./controller/notification.controller')(app);
 require('./controller/userImage.controller')(app);
 require('./controller/likedYou.controller')(app);
+require('./controller/recommendation.controller')(app);
+require('./controller/userPriority.controller')(app);
 
 // Khởi chạy server
 httpServer.listen(port, () => {

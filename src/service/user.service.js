@@ -151,7 +151,7 @@ exports.updateProfile = async (req, res) => {
             return res.status(400).json({ message: 'Invalid value for needs.' });
         }
 
-        const updateData = { dob, slogan, school, major, needs, sex, favoriteHobbies, favoriteMovies };
+        const updateData = { name, dob, slogan, school, major, needs, sex, favoriteHobbies, favoriteMovies };
 
         const updatedUser = await Users.update(updateData, { where: { email } });
 

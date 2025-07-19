@@ -5,7 +5,8 @@
     "main": "index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "start": "nodemon --inspect ./src/index.js"
+        "start": "nodemon --inspect ./src/index.js",
+        "start-call-server": "npx peerjs --port 9000"
     },
     "author": "",
     "license": "ISC",
