@@ -6,11 +6,11 @@ const Friendship = db.Friendship;
 exports.getLikedYou = async (req, res) => {
     try {
         const { user_id } = req.params;
-        // Find friendships where friend_id is current user and status is 'liked' (not matched or rejected)
+        // Find friendships where friend_id is current user and status is 'pending' (not matched or rejected)
         const likes = await Friendship.findAll({
             where: {
                 friend_id: user_id,
-                status: 'liked',
+                status: 'pending',
             },
         });
         const userIds = likes.map(like => like.user_id);

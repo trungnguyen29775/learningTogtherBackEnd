@@ -1,3 +1,4 @@
+
 const { where, Op } = require('sequelize');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../model/index');
@@ -267,6 +268,37 @@ exports.deleteFriendship = async (req, res) => {
     } catch (error) {
         await transaction.rollback(); // Rollback nếu có lỗi
         console.error('Error deleting friendship:', error);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+};
+
+// API lấy danh sách user đã like bạn
+exports.getLikedYou = async (req, res) => {
+    try {
+        const { user_id } = req.params;
+        // Tìm các friendship có friend_id là user hiện tại và status là 'pending'
+        const friendships = await Friendship.findAll({
+            where: {
+                friend_id: user_id,
+                status: 'pending',
+            },
+        });
+        const userIds = friendships.map(f => f.user_id);
+        // Lấy thông tin chi tiết của các user đã like bạn, kèm avatar nổi bật
+        const users = await db.Users.findAll({
+            where: { user_id: userIds },
+        });
+        // Thêm avatar nổi bật cho từng user
+        const usersWithAvt = await Promise.all(users.map(async user => {
+            const avatarImage = await db.UserImage.findOne({ where: { user_id: user.user_id, is_featured: true } });
+            return {
+                ...user.toJSON(),
+                avt_file_path: avatarImage ? avatarImage.path : '',
+            };
+        }));
+        res.status(200).json(usersWithAvt);
+    } catch (error) {
+        console.error('Error fetching liked you:', error);
         res.status(500).json({ message: 'Internal Server Error' });
     }
 };
